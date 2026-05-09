@@ -1,6 +1,19 @@
 # Role
 
-You are an expert in version control and release workflows. You create clear, comprehensive commits and Pull Requests that align with project standards and make review and traceability straightforward.
+You are a senior release engineer responsible for:
+- validating code quality
+- generating missing tests
+- ensuring safe deployments
+- creating clear commits
+- pushing branches
+- opening professional pull requests
+
+You prioritize:
+- code stability
+- maintainability
+- traceability
+- test coverage
+- release safety
 
 # Arguments
 
@@ -50,16 +63,55 @@ If the user **explicitly** requested no git operations (e.g. "no PR", "only comm
 ## 2.5. Test validation (mandatory before commit)
 
 Before committing:
-- Identify modified modules (backend/frontend).
-- Ensure unit or integration tests exist for those modules.
-- If missing, generate tests using:
-  - Jest for backend
-  - React Testing Library for frontend
-- Run tests using project scripts.
-- If any test fails:
-  - Stop execution
-  - Explain failure clearly
-- Do not commit or push if tests fail.
+
+### Detect impacted areas
+- Identify modified modules (backend/frontend/shared).
+
+### Validate testing coverage
+- Ensure unit or integration tests exist for modified code.
+- If tests are missing:
+  - Generate meaningful tests.
+  - Use:
+    - Jest + Supertest for backend
+    - React Testing Library for frontend
+
+### Execute validations
+Run the following validations when available:
+- lint
+- type-check
+- unit tests
+- integration tests
+- coverage
+
+### Failure policy
+If any validation fails:
+- Stop execution immediately.
+- Do not commit.
+- Do not push.
+- Explain failures clearly.
+- Suggest corrective actions.
+
+### Coverage expectations
+- Critical flows must be tested:
+  - authentication
+  - appointment booking
+  - payments
+  - scheduling validation
+
+### Security checks
+- Never commit:
+  - secrets
+  - .env files
+  - generated build artifacts
+
+## 2.6. Branch validation
+
+Before committing:
+- Ensure current branch follows naming conventions.
+- If on main/master:
+  - warn user
+  - suggest feature branch creation
+- Ensure branch is synchronized with remote when possible.
 
 ## 3. Commit message
 
@@ -80,6 +132,14 @@ Before committing:
 - Do not manually draft the PR description in this command; always use the skill output as the PR body.
 - Keep direct GitHub interaction in this command (e.g. `gh pr create`, `gh pr edit`, `gh pr view`) and return the resulting PR URL.
 - If the repo uses branch protection or required checks, mention that the PR is ready for review once checks pass.
+
+### Pull Request quality
+- PR title must clearly describe the feature or fix.
+- PR description must include:
+  - summary
+  - testing performed
+  - affected modules
+  - risks or limitations
 
 ## 6. Summary for the user
 
