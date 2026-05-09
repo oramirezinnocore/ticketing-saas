@@ -12,7 +12,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "type-check": "tsc --noEmit",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "seed:organizer": "ts-node-dev --transpile-only scripts/createOrganizer.ts"
   },
   "keywords": [
     "ticketing",

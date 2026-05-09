@@ -79,29 +79,30 @@ Visit: http://localhost:5173/register
 - Email: test@example.com
 - Password: password123
 
-### Create Organizer Account
-```bash
-# In MongoDB shell
-mongosh ticketing-saas
+### Create Organizer Account (Automated)
 
-db.users.insertOne({
-  name: "Event Organizer",
-  email: "organizer@example.com",
-  password: "$2b$10$YourHashedPasswordHere",
-  role: "organizer",
-  createdAt: new Date(),
-  updatedAt: new Date()
-})
+**Easy Way - Seed Script:**
+```bash
+cd backend
+npm run seed:organizer
 ```
 
-Or register via UI and manually update role in MongoDB:
+This creates an organizer with:
+- Email: `organizer@test.com`
+- Password: `Organizer123!`
+- Role: `organizer`
+
+**Manual Way (Alternative):**
 ```bash
+# Register via UI then update role in MongoDB
 mongosh ticketing-saas
 db.users.updateOne(
-  { email: "organizer@example.com" },
+  { email: "your-organizer@example.com" },
   { $set: { role: "organizer" } }
 )
 ```
+
+For more seeding options, see [backend/SEEDING.md](backend/SEEDING.md)
 
 ### Create Test Event
 
