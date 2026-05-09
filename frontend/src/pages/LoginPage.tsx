@@ -35,11 +35,48 @@ export const LoginPage = () => {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/events';
-      navigate(from, { replace: true });
+      // Debug log response
+      console.debug('[Login] Backend response:', {
+        hasUser: !!data?.user,
+        hasToken: !!data?.token,
+        userId: data?.user?.id,
+        userRole: data?.user?.role,
+      });
+
+      // Validate response structure
+      if (!data) {
+        console.error('[Login] No data in response');
+        setError('root', { message: 'Invalid response from server' });
+        return;
+      }
+
+      if (!data.token || typeof data.token !== 'string') {
+        console.error('[Login] Missing or invalid token in response');
+        setError('root', { message: 'Authentication failed - no token received' });
+        return;
+      }
+
+      if (!data.user || !data.user.id || !data.user.email || !data.user.role) {
+        console.error('[Login] Missing or invalid user in response');
+        setError('root', { message: 'Authentication failed - invalid user data' });
+        return;
+      }
+
+      // Attempt to set auth (validation happens in authStore)
+      try {
+        setAuth(data.user, data.token);
+
+        // Only navigate if auth was successful (check isAuthenticated)
+        // Note: setAuth may have cleared auth if token was invalid
+        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/events';
+        navigate(from, { replace: true });
+      } catch (error) {
+        console.error('[Login] Error setting auth:', error);
+        setError('root', { message: 'Failed to complete authentication' });
+      }
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
+      console.error('[Login] Login error:', error);
       const errorMessage = error.response?.data?.message || 'Invalid email or password';
       setError('root', { message: errorMessage });
     },

@@ -33,10 +33,44 @@ export const RegisterPage = () => {
   const registerMutation = useMutation({
     mutationFn: authApi.register,
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
-      navigate('/events', { replace: true });
+      // Debug log response
+      console.debug('[Register] Backend response:', {
+        hasUser: !!data?.user,
+        hasToken: !!data?.token,
+        userId: data?.user?.id,
+        userRole: data?.user?.role,
+      });
+
+      // Validate response structure
+      if (!data) {
+        console.error('[Register] No data in response');
+        setError('root', { message: 'Invalid response from server' });
+        return;
+      }
+
+      if (!data.token || typeof data.token !== 'string') {
+        console.error('[Register] Missing or invalid token in response');
+        setError('root', { message: 'Registration failed - no token received' });
+        return;
+      }
+
+      if (!data.user || !data.user.id || !data.user.email || !data.user.role) {
+        console.error('[Register] Missing or invalid user in response');
+        setError('root', { message: 'Registration failed - invalid user data' });
+        return;
+      }
+
+      // Attempt to set auth (validation happens in authStore)
+      try {
+        setAuth(data.user, data.token);
+        navigate('/events', { replace: true });
+      } catch (error) {
+        console.error('[Register] Error setting auth:', error);
+        setError('root', { message: 'Failed to complete registration' });
+      }
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
+      console.error('[Register] Registration error:', error);
       const errorMessage = error.response?.data?.message || 'Registration failed';
       setError('root', { message: errorMessage });
     },
