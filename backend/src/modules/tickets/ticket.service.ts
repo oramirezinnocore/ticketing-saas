@@ -5,6 +5,7 @@ import { Order } from '../orders/order.model';
 import { OrderStatus } from '../orders/order.interface';
 import { ITicket, ITicketDocument, TicketStatus } from './ticket.interface';
 import { BadRequestError, ConflictError, NotFoundError } from '../../utils/AppError';
+import { logger } from '../../utils/logger';
 
 const CODE_BYTES = 18;
 
@@ -115,28 +116,45 @@ export class TicketService {
     return this.toPublicTicket(doc);
   }
 
-  /** Gate validation: marks a valid ticket as used once. */
+  /** Gate validation: marks a valid ticket as used once. Atomic operation prevents race conditions. */
   async markTicketUsed(rawCode: string): Promise<ITicket> {
     const code = rawCode?.trim();
     if (!code) {
       throw new BadRequestError('Ticket code is required');
     }
 
-    const doc = await Ticket.findOne({ code });
+    const doc = await Ticket.findOneAndUpdate(
+      { code, status: TicketStatus.VALID },
+      { $set: { status: TicketStatus.USED } },
+      { new: true }
+    );
+
     if (!doc) {
-      throw new NotFoundError('Ticket not found');
-    }
-
-    if (doc.status === TicketStatus.USED) {
-      throw new ConflictError('Ticket has already been used');
-    }
-
-    if (doc.status !== TicketStatus.VALID) {
+      const existingTicket = await Ticket.findOne({ code });
+      if (!existingTicket) {
+        logger.warn({ code: code.substring(0, 8) + '...' }, 'Ticket validation failed - not found');
+        throw new NotFoundError('Ticket not found');
+      }
+      if (existingTicket.status === TicketStatus.USED) {
+        logger.warn({
+          ticketId: existingTicket._id.toString(),
+          code: code.substring(0, 8) + '...',
+        }, 'Ticket validation failed - already used');
+        throw new ConflictError('Ticket has already been used');
+      }
+      logger.warn({
+        ticketId: existingTicket._id.toString(),
+        status: existingTicket.status,
+      }, 'Ticket validation failed - invalid status');
       throw new BadRequestError('Ticket cannot be marked used');
     }
 
-    doc.status = TicketStatus.USED;
-    await doc.save();
+    logger.info({
+      ticketId: doc._id.toString(),
+      orderId: doc.orderId.toString(),
+      eventId: doc.eventId.toString(),
+    }, 'Ticket validated and marked as USED');
+
     return this.toPublicTicket(doc);
   }
 }

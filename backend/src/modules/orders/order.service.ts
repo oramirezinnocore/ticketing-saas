@@ -30,6 +30,7 @@ export class OrderService {
       })),
       total: doc.total,
       status: doc.status,
+      expiresAt: doc.expiresAt,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -128,6 +129,9 @@ export class OrderService {
           }
         }
 
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
         const [orderDoc] = await Order.create(
           [
             {
@@ -136,6 +140,7 @@ export class OrderService {
               tickets: normalizedTickets,
               total,
               status: OrderStatus.PENDING,
+              expiresAt,
             },
           ],
           { session }

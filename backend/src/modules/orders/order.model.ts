@@ -54,6 +54,10 @@ const orderSchema = new Schema<IOrderDocument>(
       enum: Object.values(OrderStatus),
       default: OrderStatus.PENDING,
     },
+    expiresAt: {
+      type: Date,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -72,5 +76,6 @@ const orderSchema = new Schema<IOrderDocument>(
 
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ eventId: 1, status: 1 });
+orderSchema.index({ status: 1, expiresAt: 1 });
 
 export const Order = model<IOrderDocument>('Order', orderSchema);

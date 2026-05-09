@@ -1,6 +1,6 @@
-/* eslint-disable no-console -- connection lifecycle logging */
 import mongoose from 'mongoose';
 import { env } from './env';
+import { logger } from '../utils/logger';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
@@ -13,24 +13,24 @@ export const connectDatabase = async (): Promise<void> => {
 
     await mongoose.connect(env.MONGODB_URI, options);
 
-    console.log('✅ MongoDB connected successfully');
+    logger.info('MongoDB connected successfully');
 
     mongoose.connection.on('error', (error) => {
-      console.error('❌ MongoDB connection error:', error);
+      logger.error({ err: error }, 'MongoDB connection error');
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️ MongoDB disconnected');
+      logger.warn('MongoDB disconnected');
     });
 
     process.on('SIGINT', () => {
       void mongoose.connection.close().then(() => {
-        console.log('MongoDB connection closed through app termination');
+        logger.info('MongoDB connection closed through app termination');
         process.exit(0);
       });
     });
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error);
+    logger.error({ err: error }, 'Failed to connect to MongoDB');
     process.exit(1);
   }
 };
@@ -38,8 +38,8 @@ export const connectDatabase = async (): Promise<void> => {
 export const disconnectDatabase = async (): Promise<void> => {
   try {
     await mongoose.connection.close();
-    console.log('MongoDB connection closed');
+    logger.info('MongoDB connection closed');
   } catch (error) {
-    console.error('Error closing MongoDB connection:', error);
+    logger.error({ err: error }, 'Error closing MongoDB connection');
   }
 };

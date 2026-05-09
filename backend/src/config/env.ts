@@ -21,6 +21,38 @@ const getEnvVariable = (key: string, defaultValue?: string): string => {
   return value;
 };
 
+const validateCriticalEnvVars = (): void => {
+  const critical = [
+    'JWT_SECRET',
+    'MONGODB_URI',
+    'MERCADOPAGO_ACCESS_TOKEN',
+    'MERCADOPAGO_WEBHOOK_SECRET',
+  ];
+
+  const missing: string[] = [];
+
+  for (const key of critical) {
+    if (!process.env[key]) {
+      missing.push(key);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `CRITICAL: Missing required environment variables: ${missing.join(', ')}\n` +
+      'Application cannot start without these variables. Please check your .env file.'
+    );
+  }
+
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+    throw new Error(
+      'CRITICAL: JWT_SECRET must be at least 32 characters long for security'
+    );
+  }
+};
+
+validateCriticalEnvVars();
+
 export const env: EnvConfig = {
   NODE_ENV: getEnvVariable('NODE_ENV', 'development'),
   PORT: parseInt(getEnvVariable('PORT', '5000'), 10),
