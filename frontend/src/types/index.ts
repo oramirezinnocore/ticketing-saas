@@ -62,7 +62,7 @@ export interface CreateEventData {
   title: string;
   description: string;
   date: string;
-  ticketTypes: TicketType[];
+  ticketTypes: Omit<TicketType, 'quantityAvailable'>[];
 }
 
 export interface OrderTicketLine {

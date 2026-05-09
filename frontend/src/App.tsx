@@ -13,6 +13,9 @@ import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { PaymentPendingPage } from './pages/PaymentPendingPage';
 import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import { OrganizerDashboard } from './pages/OrganizerDashboard';
+import { OrganizerEventsPage } from './pages/OrganizerEventsPage';
+import { CreateEventPage } from './pages/CreateEventPage';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { UserRole } from './types';
 
 const queryClient = new QueryClient({
@@ -93,6 +96,27 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/organizer/events"
+              element={
+                <ProtectedRoute requiredRoles={[UserRole.ORGANIZER, UserRole.ADMIN]}>
+                  <OrganizerEventsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/organizer/events/create"
+              element={
+                <ProtectedRoute requiredRoles={[UserRole.ORGANIZER, UserRole.ADMIN]}>
+                  <CreateEventPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Error Pages */}
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -17,8 +17,8 @@ export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps)
   }
 
   if (requiredRoles && !hasRole(requiredRoles)) {
-    // User doesn't have required role, redirect to home
-    return <Navigate to="/" replace />;
+    // User doesn't have required role, redirect to unauthorized page
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;
