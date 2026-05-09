@@ -8,11 +8,14 @@ const startServer = async (): Promise<void> => {
     await connectDatabase();
 
     const server = app.listen(env.PORT, () => {
-      logger.info({
-        port: env.PORT,
-        environment: env.NODE_ENV,
-        healthCheck: `http://localhost:${env.PORT}/health`,
-      }, 'Server started successfully');
+      logger.info(
+        {
+          port: env.PORT,
+          environment: env.NODE_ENV,
+          healthCheck: `http://localhost:${env.PORT}/health`,
+        },
+        'Server started successfully'
+      );
     });
 
     const gracefulShutdown = (signal: string): void => {

@@ -1,9 +1,11 @@
 import express, { Application, Request, Response } from 'express';
+import swaggerUi from 'swagger-ui-express';
 import { corsMiddleware, helmetMiddleware, rateLimiter } from './middlewares/security';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFound } from './middlewares/notFound';
 import { requestLogger } from './middlewares/requestLogger';
 import { sendSuccess } from './utils/response';
+import { swaggerSpec } from './config/swagger';
 
 import { authRoutes } from './modules/auth';
 import { userRoutes } from './modules/users';
@@ -35,6 +37,16 @@ app.get('/health', (_req: Request, res: Response) => {
     200
   );
 });
+
+// Swagger API Documentation
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Ticketing SaaS API Documentation',
+  })
+);
 
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);

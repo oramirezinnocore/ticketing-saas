@@ -136,24 +136,33 @@ export class TicketService {
         throw new NotFoundError('Ticket not found');
       }
       if (existingTicket.status === TicketStatus.USED) {
-        logger.warn({
-          ticketId: existingTicket._id.toString(),
-          code: code.substring(0, 8) + '...',
-        }, 'Ticket validation failed - already used');
+        logger.warn(
+          {
+            ticketId: existingTicket._id.toString(),
+            code: code.substring(0, 8) + '...',
+          },
+          'Ticket validation failed - already used'
+        );
         throw new ConflictError('Ticket has already been used');
       }
-      logger.warn({
-        ticketId: existingTicket._id.toString(),
-        status: existingTicket.status,
-      }, 'Ticket validation failed - invalid status');
+      logger.warn(
+        {
+          ticketId: existingTicket._id.toString(),
+          status: existingTicket.status,
+        },
+        'Ticket validation failed - invalid status'
+      );
       throw new BadRequestError('Ticket cannot be marked used');
     }
 
-    logger.info({
-      ticketId: doc._id.toString(),
-      orderId: doc.orderId.toString(),
-      eventId: doc.eventId.toString(),
-    }, 'Ticket validated and marked as USED');
+    logger.info(
+      {
+        ticketId: doc._id.toString(),
+        orderId: doc.orderId.toString(),
+        eventId: doc.eventId.toString(),
+      },
+      'Ticket validated and marked as USED'
+    );
 
     return this.toPublicTicket(doc);
   }

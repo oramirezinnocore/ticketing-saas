@@ -172,12 +172,15 @@ export class PaymentService {
       webhookProcessed: false,
     });
 
-    logger.info({
-      orderId,
-      paymentId: payment._id.toString(),
-      preferenceId: mpResponse.id,
-      amount,
-    }, 'Payment preference created');
+    logger.info(
+      {
+        orderId,
+        paymentId: payment._id.toString(),
+        preferenceId: mpResponse.id,
+        amount,
+      },
+      'Payment preference created'
+    );
 
     return {
       preferenceId: mpResponse.id,
@@ -285,12 +288,15 @@ export class PaymentService {
           if (amountDiff > 0.01) {
             payment.status = PaymentStatus.REJECTED;
             await payment.save({ session });
-            logger.error({
-              orderId,
-              expectedAmount: order.total,
-              receivedAmount: paymentDetail.transaction_amount,
-              difference: amountDiff,
-            }, 'Payment amount mismatch detected - potential fraud');
+            logger.error(
+              {
+                orderId,
+                expectedAmount: order.total,
+                receivedAmount: paymentDetail.transaction_amount,
+                difference: amountDiff,
+              },
+              'Payment amount mismatch detected - potential fraud'
+            );
             throw new ConflictError(
               `Payment amount mismatch: expected ${order.total}, got ${paymentDetail.transaction_amount}`
             );
@@ -300,11 +306,14 @@ export class PaymentService {
             order.status = OrderStatus.PAID;
             await order.save({ session });
 
-            logger.info({
-              orderId,
-              paymentId: payment._id.toString(),
-              amount: paymentDetail.transaction_amount,
-            }, 'Order marked as PAID - issuing tickets');
+            logger.info(
+              {
+                orderId,
+                paymentId: payment._id.toString(),
+                amount: paymentDetail.transaction_amount,
+              },
+              'Order marked as PAID - issuing tickets'
+            );
 
             await this.ticketService.issueTicketsForPaidOrder(orderId);
 
