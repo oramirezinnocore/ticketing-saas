@@ -8,7 +8,11 @@ export class EventController {
   constructor(private readonly eventService: EventService = new EventService()) {}
 
   createEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const payload = req.body as CreateEventDTO;
+    // SECURITY: organizerId comes from authenticated JWT, not from request body
+    const payload: CreateEventDTO = {
+      ...req.body,
+      organizerId: req.user!.userId, // Override any organizerId from body with authenticated user
+    };
     const event = await this.eventService.createEvent(payload);
     sendSuccess(res, event, 201);
   });

@@ -40,14 +40,12 @@ const validateCriticalEnvVars = (): void => {
   if (missing.length > 0) {
     throw new Error(
       `CRITICAL: Missing required environment variables: ${missing.join(', ')}\n` +
-      'Application cannot start without these variables. Please check your .env file.'
+        'Application cannot start without these variables. Please check your .env file.'
     );
   }
 
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-    throw new Error(
-      'CRITICAL: JWT_SECRET must be at least 32 characters long for security'
-    );
+    throw new Error('CRITICAL: JWT_SECRET must be at least 32 characters long for security');
   }
 };
 
