@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { AuthController } from './auth.controller';
 import { validateRequest } from '../../middlewares/validateRequest';
+import { authenticate } from '../../middlewares/auth';
 
 const router = Router();
 const authController = new AuthController();
@@ -138,5 +139,44 @@ router.post(
   ],
   authController.login
 );
+
+/**
+ * @swagger
+ * /auth/verify:
+ *   get:
+ *     summary: Verify JWT token and get current user
+ *     tags: [Authentication]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     valid:
+ *                       type: boolean
+ *                       example: true
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.get('/verify', authenticate, authController.verifyToken);
 
 export default router;
