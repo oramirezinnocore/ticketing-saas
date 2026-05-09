@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import { corsMiddleware, helmetMiddleware, rateLimiter } from './middlewares/security';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFound } from './middlewares/notFound';
+import { requestLogger } from './middlewares/requestLogger';
 import { sendSuccess } from './utils/response';
 
 import { authRoutes } from './modules/auth';
@@ -18,6 +19,7 @@ const API_PREFIX = '/api/v1';
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 app.use(rateLimiter);
+app.use(requestLogger);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

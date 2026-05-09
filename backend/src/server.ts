@@ -1,27 +1,29 @@
-/* eslint-disable no-console -- server bootstrap logging */
 import app from './app';
 import { env } from './config';
 import { connectDatabase } from './config/database';
+import { logger } from './utils/logger';
 
 const startServer = async (): Promise<void> => {
   try {
     await connectDatabase();
 
     const server = app.listen(env.PORT, () => {
-      console.log(`🚀 Server running on port ${env.PORT}`);
-      console.log(`📝 Environment: ${env.NODE_ENV}`);
-      console.log(`🔗 Health check: http://localhost:${env.PORT}/health`);
+      logger.info({
+        port: env.PORT,
+        environment: env.NODE_ENV,
+        healthCheck: `http://localhost:${env.PORT}/health`,
+      }, 'Server started successfully');
     });
 
     const gracefulShutdown = (signal: string): void => {
-      console.log(`\n${signal} received. Starting graceful shutdown...`);
+      logger.info({ signal }, 'Starting graceful shutdown');
       server.close(() => {
-        console.log('HTTP server closed');
+        logger.info('HTTP server closed');
         process.exit(0);
       });
 
       setTimeout(() => {
-        console.error('Forced shutdown after timeout');
+        logger.error('Forced shutdown after timeout');
         process.exit(1);
       }, 10000);
     };
@@ -30,16 +32,16 @@ const startServer = async (): Promise<void> => {
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
     process.on('unhandledRejection', (reason: Error) => {
-      console.error('Unhandled Rejection:', reason);
+      logger.error({ err: reason }, 'Unhandled Rejection');
       throw reason;
     });
 
     process.on('uncaughtException', (error: Error) => {
-      console.error('Uncaught Exception:', error);
+      logger.error({ err: error }, 'Uncaught Exception');
       process.exit(1);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error({ err: error }, 'Failed to start server');
     process.exit(1);
   }
 };

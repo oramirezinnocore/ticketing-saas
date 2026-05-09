@@ -18,6 +18,7 @@ export interface IOrder {
   tickets: IOrderTicketLine[];
   total: number;
   status: OrderStatus;
+  expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,7 @@ export interface IOrderDocument extends Document {
   tickets: IOrderTicketLine[];
   total: number;
   status: OrderStatus;
+  expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
