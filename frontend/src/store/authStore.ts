@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/types';
+import { decodeJWT, isTokenExpired, isValidJWT } from '@/utils/jwt';
 
 interface AuthState {
   user: User | null;
@@ -11,81 +12,114 @@ interface AuthState {
   validateSession: () => void;
 }
 
-interface JWTPayload {
-  userId: string;
-  email: string;
-  role: string;
-  exp: number;
-}
-
-// Decode JWT without verification (verification happens on backend)
-const decodeJWT = (token: string): JWTPayload | null => {
-  try {
-    const base64Url = token.split('.')[1];
-    if (!base64Url) return null;
-
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Failed to decode JWT:', error);
-    return null;
-  }
-};
-
-// Check if JWT is expired
-const isTokenExpired = (token: string): boolean => {
-  const payload = decodeJWT(token);
-  if (!payload || !payload.exp) return true;
-
-  // exp is in seconds, Date.now() is in milliseconds
-  return payload.exp * 1000 < Date.now();
-};
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
+
       setAuth: (user, token) => {
-        // Validate token before setting
-        if (isTokenExpired(token)) {
-          console.warn('Attempted to set expired token');
+        // Debug log (remove in production)
+        console.debug('[Auth] setAuth called', {
+          hasUser: !!user,
+          hasToken: !!token,
+          tokenLength: token?.length,
+        });
+
+        // Validate user object
+        if (!user || !user.id || !user.email || !user.role) {
+          console.error('[Auth] Invalid user object provided');
           get().clearAuth();
           return;
         }
 
+        // Validate token structure
+        if (!isValidJWT(token)) {
+          console.error('[Auth] Invalid JWT token structure');
+          get().clearAuth();
+          return;
+        }
+
+        // Check if token is expired
+        if (isTokenExpired(token)) {
+          console.warn('[Auth] Attempted to set expired token');
+          get().clearAuth();
+          return;
+        }
+
+        // Verify token payload matches user
+        const payload = decodeJWT(token);
+        if (!payload) {
+          console.error('[Auth] Failed to decode token payload');
+          get().clearAuth();
+          return;
+        }
+
+        if (payload.userId !== user.id || payload.role !== user.role) {
+          console.error('[Auth] Token payload does not match user object');
+          get().clearAuth();
+          return;
+        }
+
+        // All validations passed - set auth state
+        console.debug('[Auth] Authentication successful');
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
       },
+
       clearAuth: () => {
+        console.debug('[Auth] Clearing authentication state');
+
+        // Clear localStorage
         localStorage.removeItem('token');
+
+        // Clear zustand persisted state
+        localStorage.removeItem('auth-storage');
+
+        // Reset state
         set({ user: null, token: null, isAuthenticated: false });
       },
+
       validateSession: () => {
         const { token, user } = get();
 
+        console.debug('[Auth] Validating session', {
+          hasToken: !!token,
+          hasUser: !!user,
+        });
+
         // If no token or user, clear auth
         if (!token || !user) {
+          console.debug('[Auth] No token or user found, clearing auth');
           get().clearAuth();
           return;
         }
 
-        // If token is expired, clear auth
+        // Validate token structure
+        if (!isValidJWT(token)) {
+          console.warn('[Auth] Invalid token structure, clearing auth');
+          get().clearAuth();
+          return;
+        }
+
+        // Check if token is expired
         if (isTokenExpired(token)) {
-          console.warn('Session expired');
+          console.warn('[Auth] Token expired, clearing auth');
           get().clearAuth();
           return;
         }
 
-        // Token is valid, keep session alive
+        // Verify token payload matches user
+        const payload = decodeJWT(token);
+        if (!payload || payload.userId !== user.id) {
+          console.warn('[Auth] Token payload mismatch, clearing auth');
+          get().clearAuth();
+          return;
+        }
+
+        // Session is valid
+        console.debug('[Auth] Session is valid');
       },
     }),
     {
@@ -96,6 +130,8 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
+        console.debug('[Auth] Rehydrating storage');
+
         // Validate session after rehydration from localStorage
         if (state) {
           state.validateSession();
