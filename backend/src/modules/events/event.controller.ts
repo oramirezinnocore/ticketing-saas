@@ -26,4 +26,13 @@ export class EventController {
     const event = await this.eventService.getEventById(req.params.id);
     sendSuccess(res, event, 200);
   });
+
+  deleteEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    await this.eventService.deleteEvent(
+      req.params.id,
+      req.user!.userId,
+      req.user!.role
+    );
+    sendSuccess(res, { message: 'Event deleted successfully' }, 200);
+  });
 }

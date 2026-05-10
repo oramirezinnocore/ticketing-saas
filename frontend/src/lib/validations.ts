@@ -54,6 +54,8 @@ export const createEventSchema = z.object({
     .max(300, 'El título no debe exceder 300 caracteres'),
   description: z.string().min(1, 'La descripción es obligatoria'),
   date: z.string().min(1, 'La fecha del evento es obligatoria'),
+  coverImageUrl: z.string().optional(),
+  coverImageAlt: z.string().max(200, 'El texto alternativo no debe exceder 200 caracteres').optional(),
   ticketTypes: z
     .array(ticketTypeSchema)
     .min(1, 'Debes agregar al menos un tipo de boleto')

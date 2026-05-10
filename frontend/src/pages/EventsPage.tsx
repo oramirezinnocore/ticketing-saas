@@ -4,6 +4,7 @@ import { eventsApi } from '@/api/events';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { EventImage } from '@/components/EventImage';
 import { eventTexts, commonTexts } from '@/i18n';
 import { formatDate, formatCurrency } from '@/utils/format';
 
@@ -62,10 +63,26 @@ export const EventsPage = () => {
 
             return (
               <Link key={event.id} to={`/events/${event.id}`}>
-                <Card padding="none" className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
-                  <div className="p-6 flex flex-col h-full">
-                    <h3 className="text-xl font-semibold mb-2 line-clamp-1">{event.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2 flex-grow">{event.description}</p>
+                <Card padding="none" className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                  {/* Cover Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <EventImage
+                      src={event.coverImageUrl}
+                      alt={event.coverImageAlt}
+                      title={event.title}
+                      className="w-full h-full"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <h3 className="text-xl font-bold text-white line-clamp-2 drop-shadow-lg">
+                        {event.title}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Event Info */}
+                  <div className="p-4 flex flex-col flex-grow">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">{event.description}</p>
 
                     <div className="space-y-3">
                       <div className="flex items-center text-sm text-gray-500">

@@ -63,6 +63,27 @@ const eventSchema = new Schema<IEventDocument>(
         message: 'At least one ticket type is required',
       },
     },
+    coverImageUrl: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (value: string): boolean => {
+          if (!value) return true; // Optional field
+          try {
+            const url = new URL(value);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+          } catch {
+            return false;
+          }
+        },
+        message: 'Cover image URL must be a valid HTTP/HTTPS URL',
+      },
+    },
+    coverImageAlt: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Image alt text must not exceed 200 characters'],
+    },
   },
   {
     timestamps: true,

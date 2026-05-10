@@ -197,4 +197,53 @@ router.get(
   eventController.getEventById
 );
 
+/**
+ * @swagger
+ * /events/{id}:
+ *   delete:
+ *     summary: Delete an event (Organizer owner or Admin only)
+ *     tags: [Events]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID (MongoDB ObjectId)
+ *     responses:
+ *       200:
+ *         description: Event deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Event deleted successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('organizer', 'admin'),
+  [param('id').isMongoId().withMessage('Invalid event id'), validateRequest],
+  eventController.deleteEvent
+);
+
 export default router;

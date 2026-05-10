@@ -14,6 +14,8 @@ export interface IEvent {
   date: Date;
   organizerId: string;
   ticketTypes: ITicketType[];
+  coverImageUrl?: string;
+  coverImageAlt?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +26,8 @@ export interface CreateEventDTO {
   date: string | Date;
   organizerId: string;
   ticketTypes: ITicketType[];
+  coverImageUrl?: string;
+  coverImageAlt?: string;
 }
 
 export interface IEventDocument extends Document {
@@ -32,6 +36,8 @@ export interface IEventDocument extends Document {
   date: Date;
   organizerId: Types.ObjectId;
   ticketTypes: ITicketType[];
+  coverImageUrl?: string;
+  coverImageAlt?: string;
   createdAt: Date;
   updatedAt: Date;
 }

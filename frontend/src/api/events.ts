@@ -7,4 +7,6 @@ export const eventsApi = {
   getById: (id: string) => apiClient.get<Event>(`/events/${id}`),
 
   create: (data: CreateEventData) => apiClient.post<Event>('/events', data),
+
+  delete: (id: string) => apiClient.delete<{ message: string }>(`/events/${id}`),
 };

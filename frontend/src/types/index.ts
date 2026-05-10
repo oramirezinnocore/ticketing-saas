@@ -54,6 +54,8 @@ export interface Event {
   date: string;
   organizerId: string;
   ticketTypes: TicketType[];
+  coverImageUrl?: string;
+  coverImageAlt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +65,16 @@ export interface CreateEventData {
   description: string;
   date: string;
   ticketTypes: Omit<TicketType, 'quantityAvailable'>[];
+  coverImageUrl?: string;
+  coverImageAlt?: string;
+}
+
+export interface UploadedImage {
+  url: string;
+  filename: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
 }
 
 export interface OrderTicketLine {
