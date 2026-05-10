@@ -9,6 +9,7 @@ import { registerSchema, type RegisterFormData } from '@/lib/validations';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Container } from '@/components/Container';
+import { authTexts } from '@/i18n';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -44,19 +45,19 @@ export const RegisterPage = () => {
       // Validate response structure
       if (!data) {
         console.error('[Register] No data in response');
-        setError('root', { message: 'Invalid response from server' });
+        setError('root', { message: authTexts.errors.serverError });
         return;
       }
 
       if (!data.token || typeof data.token !== 'string') {
         console.error('[Register] Missing or invalid token in response');
-        setError('root', { message: 'Registration failed - no token received' });
+        setError('root', { message: authTexts.errors.registrationFailed });
         return;
       }
 
       if (!data.user || !data.user.id || !data.user.email || !data.user.role) {
         console.error('[Register] Missing or invalid user in response');
-        setError('root', { message: 'Registration failed - invalid user data' });
+        setError('root', { message: authTexts.errors.registrationFailed });
         return;
       }
 
@@ -66,12 +67,12 @@ export const RegisterPage = () => {
         navigate('/events', { replace: true });
       } catch (error) {
         console.error('[Register] Error setting auth:', error);
-        setError('root', { message: 'Failed to complete registration' });
+        setError('root', { message: authTexts.errors.registrationFailed });
       }
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
       console.error('[Register] Registration error:', error);
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      const errorMessage = error.response?.data?.message || authTexts.errors.registrationFailed;
       setError('root', { message: errorMessage });
     },
   });
@@ -87,7 +88,7 @@ export const RegisterPage = () => {
   return (
     <Container size="sm" className="py-12">
       <Card>
-        <h1 className="text-3xl font-bold text-center mb-6">Register</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">{authTexts.register.title}</h1>
 
         {errors.root && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -98,7 +99,7 @@ export const RegisterPage = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              {authTexts.register.nameLabel}
             </label>
             <input
               id="name"
@@ -115,7 +116,7 @@ export const RegisterPage = () => {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {authTexts.register.emailLabel}
             </label>
             <input
               id="email"
@@ -132,7 +133,7 @@ export const RegisterPage = () => {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {authTexts.register.passwordLabel}
             </label>
             <input
               id="password"
@@ -148,7 +149,7 @@ export const RegisterPage = () => {
               <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Must be at least 8 characters with uppercase, lowercase, and a number
+              {authTexts.register.passwordHint}
             </p>
           </div>
 
@@ -157,7 +158,7 @@ export const RegisterPage = () => {
               htmlFor="confirmPassword"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Confirm Password
+              {authTexts.register.confirmPasswordLabel}
             </label>
             <input
               id="confirmPassword"
@@ -180,14 +181,14 @@ export const RegisterPage = () => {
             isLoading={isSubmitting || registerMutation.isPending}
             disabled={isSubmitting || registerMutation.isPending}
           >
-            Register
+            {registerMutation.isPending ? authTexts.register.loading : authTexts.register.submitButton}
           </Button>
         </form>
 
         <p className="text-center mt-4 text-sm text-gray-600">
-          Already have an account?{' '}
+          {authTexts.register.hasAccount}{' '}
           <Link to="/login" className="text-primary-600 hover:underline">
-            Login
+            {authTexts.register.loginLink}
           </Link>
         </p>
       </Card>

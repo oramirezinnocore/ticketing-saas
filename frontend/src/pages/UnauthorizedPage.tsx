@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { authTexts, commonTexts } from '@/i18n';
 
 export const UnauthorizedPage = () => {
   const navigate = useNavigate();
@@ -25,36 +26,36 @@ export const UnauthorizedPage = () => {
               />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-red-600 mb-2">Access Denied</h1>
+          <h1 className="text-3xl font-bold text-red-600 mb-2">{authTexts.unauthorized.title}</h1>
           <p className="text-xl text-gray-700 mb-6">
-            You don't have permission to access this page
+            {authTexts.unauthorized.message}
           </p>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
-          <h3 className="font-semibold mb-3">Why am I seeing this?</h3>
+          <h3 className="font-semibold mb-3">{authTexts.unauthorized.whyTitle}</h3>
           <ul className="space-y-2 text-sm text-gray-700">
             <li className="flex items-start">
               <span className="mr-2">•</span>
-              <span>This page requires special permissions (e.g., organizer or admin role)</span>
+              <span>{authTexts.unauthorized.reason1}</span>
             </li>
             <li className="flex items-start">
               <span className="mr-2">•</span>
-              <span>Your current account doesn't have the required role</span>
+              <span>{authTexts.unauthorized.reason2}</span>
             </li>
             <li className="flex items-start">
               <span className="mr-2">•</span>
-              <span>You may need to contact support to upgrade your account</span>
+              <span>{authTexts.unauthorized.reason3}</span>
             </li>
           </ul>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" onClick={() => navigate('/')}>
-            Go to Home
+            {authTexts.unauthorized.goHome}
           </Button>
           <Button size="lg" variant="outline" onClick={() => navigate(-1)}>
-            Go Back
+            {commonTexts.actions.back}
           </Button>
         </div>
       </Card>
