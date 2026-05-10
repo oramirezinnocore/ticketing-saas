@@ -9,6 +9,7 @@ import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Container } from '@/components/Container';
+import { authTexts } from '@/i18n';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -46,19 +47,19 @@ export const LoginPage = () => {
       // Validate response structure
       if (!data) {
         console.error('[Login] No data in response');
-        setError('root', { message: 'Invalid response from server' });
+        setError('root', { message: authTexts.errors.serverError });
         return;
       }
 
       if (!data.token || typeof data.token !== 'string') {
         console.error('[Login] Missing or invalid token in response');
-        setError('root', { message: 'Authentication failed - no token received' });
+        setError('root', { message: authTexts.errors.authFailed });
         return;
       }
 
       if (!data.user || !data.user.id || !data.user.email || !data.user.role) {
         console.error('[Login] Missing or invalid user in response');
-        setError('root', { message: 'Authentication failed - invalid user data' });
+        setError('root', { message: authTexts.errors.authFailed });
         return;
       }
 
@@ -72,12 +73,12 @@ export const LoginPage = () => {
         navigate(from, { replace: true });
       } catch (error) {
         console.error('[Login] Error setting auth:', error);
-        setError('root', { message: 'Failed to complete authentication' });
+        setError('root', { message: authTexts.errors.authFailed });
       }
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
       console.error('[Login] Login error:', error);
-      const errorMessage = error.response?.data?.message || 'Invalid email or password';
+      const errorMessage = error.response?.data?.message || authTexts.errors.invalidCredentials;
       setError('root', { message: errorMessage });
     },
   });
@@ -89,7 +90,7 @@ export const LoginPage = () => {
   return (
     <Container size="sm" className="py-12">
       <Card>
-        <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">{authTexts.login.title}</h1>
 
         {errors.root && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -100,7 +101,7 @@ export const LoginPage = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {authTexts.login.emailLabel}
             </label>
             <input
               id="email"
@@ -119,7 +120,7 @@ export const LoginPage = () => {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {authTexts.login.passwordLabel}
             </label>
             <input
               id="password"
@@ -142,14 +143,14 @@ export const LoginPage = () => {
             isLoading={isSubmitting || loginMutation.isPending}
             disabled={isSubmitting || loginMutation.isPending}
           >
-            Login
+            {loginMutation.isPending ? authTexts.login.loading : authTexts.login.submitButton}
           </Button>
         </form>
 
         <p className="text-center mt-4 text-sm text-gray-600">
-          Don't have an account?{' '}
+          {authTexts.login.noAccount}{' '}
           <Link to="/register" className="text-primary-600 hover:underline">
-            Register
+            {authTexts.login.registerLink}
           </Link>
         </p>
       </Card>

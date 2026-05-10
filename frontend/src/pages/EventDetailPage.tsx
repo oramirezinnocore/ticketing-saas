@@ -7,7 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { format } from 'date-fns';
+import { eventTexts, commonTexts } from '@/i18n';
+import { formatDate, formatTime, formatCurrency, pluralize } from '@/utils/format';
 import type { OrderTicketLine } from '@/types';
 
 export const EventDetailPage = () => {
@@ -97,9 +98,9 @@ export const EventDetailPage = () => {
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h2 className="text-2xl font-semibold mb-2">Event Not Found</h2>
-          <p className="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed</p>
-          <Button onClick={() => navigate('/events')}>Browse Events</Button>
+          <h2 className="text-2xl font-semibold mb-2">{eventTexts.detail.notFound}</h2>
+          <p className="text-gray-600 mb-6">{eventTexts.detail.notFoundMessage}</p>
+          <Button onClick={() => navigate('/events')}>{eventTexts.detail.backToEvents}</Button>
         </Card>
       </Container>
     );
@@ -117,18 +118,18 @@ export const EventDetailPage = () => {
                 <svg className="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span className="font-medium">{format(new Date(event.date), 'PPP')}</span>
+                <span className="font-medium">{formatDate(new Date(event.date), 'full')}</span>
               </div>
               <div className="flex items-center">
                 <svg className="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="font-medium">{format(new Date(event.date), 'p')}</span>
+                <span className="font-medium">{formatTime(new Date(event.date))}</span>
               </div>
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold mb-3">About This Event</h2>
+              <h2 className="text-xl font-semibold mb-3">{eventTexts.detail.aboutEvent}</h2>
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{event.description}</p>
             </div>
           </Card>
@@ -136,8 +137,8 @@ export const EventDetailPage = () => {
 
         <div className="lg:col-span-1">
           <Card className="sticky top-8">
-            <h2 className="text-xl font-semibold mb-1">Select Tickets</h2>
-            <p className="text-sm text-gray-600 mb-4">Choose the number of tickets you need</p>
+            <h2 className="text-xl font-semibold mb-1">{eventTexts.detail.selectTickets}</h2>
+            <p className="text-sm text-gray-600 mb-4">{eventTexts.detail.selectTicketsSubtitle}</p>
 
             <div className="space-y-4 mb-6">
               {event.ticketTypes.map((ticket) => (
@@ -145,7 +146,7 @@ export const EventDetailPage = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="font-semibold text-lg">{ticket.name}</p>
-                      <p className="text-2xl font-bold text-primary-600">${ticket.price.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-primary-600">{formatCurrency(ticket.price)}</p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded ${
                       ticket.quantityAvailable > 10
@@ -155,8 +156,8 @@ export const EventDetailPage = () => {
                         : 'bg-red-100 text-red-700'
                     }`}>
                       {ticket.quantityAvailable > 0
-                        ? `${ticket.quantityAvailable} left`
-                        : 'Sold out'}
+                        ? `${ticket.quantityAvailable} ${eventTexts.detail.available}`
+                        : eventTexts.detail.soldOut}
                     </span>
                   </div>
 
@@ -191,7 +192,7 @@ export const EventDetailPage = () => {
                     </div>
                   ) : (
                     <div className="text-center py-2 text-gray-500">
-                      Unavailable
+                      {eventTexts.detail.unavailable}
                     </div>
                   )}
                 </div>
@@ -200,13 +201,13 @@ export const EventDetailPage = () => {
 
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">${total.toFixed(2)}</span>
+                <span className="text-gray-600">{commonTexts.labels.subtotal}</span>
+                <span className="font-semibold">{formatCurrency(total)}</span>
               </div>
               {totalTickets > 0 && (
                 <div className="flex justify-between items-center text-sm text-gray-500">
-                  <span>{totalTickets} ticket{totalTickets > 1 ? 's' : ''}</span>
-                  <span>${(total / totalTickets).toFixed(2)} avg</span>
+                  <span>{totalTickets} {pluralize(totalTickets, 'boleto', 'boletos')}</span>
+                  <span>{formatCurrency(total / totalTickets)} promedio</span>
                 </div>
               )}
             </div>
@@ -218,12 +219,12 @@ export const EventDetailPage = () => {
               disabled={totalTickets === 0}
               isLoading={createOrderMutation.isPending}
             >
-              {totalTickets === 0 ? 'Select Tickets to Continue' : `Buy ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''} • $${total.toFixed(2)}`}
+              {totalTickets === 0 ? eventTexts.detail.selectTicketsContinue : `${eventTexts.detail.buyTickets} ${totalTickets} ${pluralize(totalTickets, 'boleto', 'boletos')} • ${formatCurrency(total)}`}
             </Button>
 
             {!isAuthenticated && totalTickets > 0 && (
               <p className="text-xs text-center text-gray-500 mt-3">
-                You'll be asked to log in at checkout
+                {eventTexts.detail.loginRequired}
               </p>
             )}
           </Card>

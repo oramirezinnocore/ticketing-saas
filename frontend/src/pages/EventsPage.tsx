@@ -4,7 +4,8 @@ import { eventsApi } from '@/api/events';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { format } from 'date-fns';
+import { eventTexts, commonTexts } from '@/i18n';
+import { formatDate, formatCurrency } from '@/utils/format';
 
 export const EventsPage = () => {
   const { data: events, isLoading, isError } = useQuery({
@@ -39,8 +40,8 @@ export const EventsPage = () => {
     return (
       <Container className="py-12">
         <div className="text-center">
-          <div className="text-red-600 text-lg mb-4">Failed to load events</div>
-          <p className="text-gray-600">Please try again later</p>
+          <div className="text-red-600 text-lg mb-4">{eventTexts.list.loadError}</div>
+          <p className="text-gray-600">{commonTexts.messages.tryAgain}</p>
         </div>
       </Container>
     );
@@ -49,8 +50,8 @@ export const EventsPage = () => {
   return (
     <Container className="py-8">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">Upcoming Events</h1>
-        <p className="text-gray-600">Discover amazing experiences and book your tickets</p>
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">{eventTexts.list.title}</h1>
+        <p className="text-gray-600">{eventTexts.list.subtitle}</p>
       </div>
 
       {events && events.length > 0 ? (
@@ -71,22 +72,22 @@ export const EventsPage = () => {
                         <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span className="truncate">{format(new Date(event.date), 'PPP')}</span>
+                        <span className="truncate">{formatDate(new Date(event.date), 'long')}</span>
                       </div>
 
                       <div className="flex items-center text-sm text-gray-500">
                         <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
-                        <span>{totalAvailable} tickets available</span>
+                        <span>{totalAvailable} {eventTexts.list.ticketsAvailable}</span>
                       </div>
 
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-lg font-bold text-primary-600">
-                          From ${minPrice.toFixed(2)}
+                          {commonTexts.currency.from} {formatCurrency(minPrice)}
                         </span>
                         <Button size="sm">
-                          View Details →
+                          {eventTexts.list.viewDetails} →
                         </Button>
                       </div>
                     </div>
@@ -101,8 +102,8 @@ export const EventsPage = () => {
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-xl text-gray-500 mb-2">No events available</p>
-          <p className="text-gray-400">Check back soon for upcoming events</p>
+          <p className="text-xl text-gray-500 mb-2">{eventTexts.list.noEvents}</p>
+          <p className="text-gray-400">{eventTexts.list.noEventsMessage}</p>
         </div>
       )}
     </Container>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from './Button';
 import { UserRole } from '@/types';
+import { commonTexts } from '@/i18n';
 
 export const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -19,7 +20,7 @@ export const Navbar = () => {
                 to="/events"
                 className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
               >
-                Events
+                {commonTexts.nav.events}
               </Link>
               {isAuthenticated && (
                 <>
@@ -27,14 +28,14 @@ export const Navbar = () => {
                     to="/tickets"
                     className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
                   >
-                    My Tickets
+                    {commonTexts.nav.myTickets}
                   </Link>
                   {(user?.role === UserRole.ORGANIZER || user?.role === UserRole.ADMIN) && (
                     <Link
                       to="/organizer"
                       className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
                     >
-                      Dashboard
+                      {commonTexts.nav.dashboard}
                     </Link>
                   )}
                 </>
@@ -46,21 +47,21 @@ export const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-700">
-                  Hello, <span className="font-medium">{user?.name}</span>
+                  {commonTexts.nav.hello}, <span className="font-medium">{user?.name}</span>
                 </span>
                 <Button variant="outline" size="sm" onClick={logout}>
-                  Logout
+                  {commonTexts.nav.logout}
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/login">
                   <Button variant="outline" size="sm">
-                    Login
+                    {commonTexts.nav.login}
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button size="sm">Register</Button>
+                  <Button size="sm">{commonTexts.nav.register}</Button>
                 </Link>
               </>
             )}
