@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { sendSuccess } from '../../utils/response';
 import { BadRequestError } from '../../utils/AppError';
-import { buildFileUrl } from '../../config/upload.config';
 
 export class UploadController {
   /**
@@ -14,14 +13,14 @@ export class UploadController {
       throw new BadRequestError('No file uploaded');
     }
 
-    // Build public URL
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const fileUrl = buildFileUrl(req.file.filename, baseUrl);
+    // Return RELATIVE path (not absolute URL)
+    // Frontend will handle prepending the base URL
+    const relativePath = `/uploads/events/${req.file.filename}`;
 
     sendSuccess(
       res,
       {
-        url: fileUrl,
+        url: relativePath,
         filename: req.file.filename,
         originalName: req.file.originalname,
         mimetype: req.file.mimetype,
