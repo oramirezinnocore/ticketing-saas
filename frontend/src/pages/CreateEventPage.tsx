@@ -6,7 +6,9 @@ import { eventsApi } from '@/api/events';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { EventImageUploader } from '@/components/events/EventImageUploader';
 import { createEventSchema, type CreateEventFormData } from '@/lib/validations';
+import { eventTexts, commonTexts } from '@/i18n';
 
 export const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -18,15 +20,21 @@ export const CreateEventPage = () => {
     control,
     formState: { errors, isSubmitting },
     setError,
+    setValue,
+    watch,
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
       title: '',
       description: '',
       date: '',
+      coverImageUrl: '',
+      coverImageAlt: '',
       ticketTypes: [{ name: 'General Admission', price: 0, quantity: 100 }],
     },
   });
+
+  const watchedImageUrl = watch('coverImageUrl');
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -68,9 +76,9 @@ export const CreateEventPage = () => {
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Dashboard
+          {eventTexts.create.backToDashboard}
         </button>
-        <h1 className="text-3xl font-bold">Create New Event</h1>
+        <h1 className="text-3xl font-bold">{eventTexts.create.title}</h1>
       </div>
 
       <Card>
@@ -82,17 +90,17 @@ export const CreateEventPage = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Event Details</h2>
+            <h2 className="text-xl font-semibold mb-4">{eventTexts.create.eventDetails}</h2>
             <div className="space-y-4">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Title <span className="text-red-500">*</span>
+                  {eventTexts.create.eventTitle} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="title"
                   type="text"
                   {...register('title')}
-                  placeholder="Tech Conference 2024"
+                  placeholder={eventTexts.create.eventTitlePlaceholder}
                   maxLength={300}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
@@ -109,12 +117,12 @@ export const CreateEventPage = () => {
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Description <span className="text-red-500">*</span>
+                  {eventTexts.create.description} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="description"
                   {...register('description')}
-                  placeholder="Describe your event..."
+                  placeholder={eventTexts.create.descriptionPlaceholder}
                   rows={5}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
@@ -128,7 +136,7 @@ export const CreateEventPage = () => {
 
               <div>
                 <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Date & Time <span className="text-red-500">*</span>
+                  {eventTexts.create.dateTime} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="date"
@@ -141,12 +149,28 @@ export const CreateEventPage = () => {
                 />
                 {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>}
               </div>
+
+              {/* Image Uploader */}
+              <div className="pt-4 border-t border-gray-200">
+                <EventImageUploader
+                  onImageUploaded={(url) => {
+                    setValue('coverImageUrl', url);
+                    setValue('coverImageAlt', watch('title') || 'Imagen del evento');
+                  }}
+                  onImageRemoved={() => {
+                    setValue('coverImageUrl', '');
+                    setValue('coverImageAlt', '');
+                  }}
+                  currentImageUrl={watchedImageUrl}
+                  disabled={isSubmitting || createEventMutation.isPending}
+                />
+              </div>
             </div>
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Ticket Types</h2>
+              <h2 className="text-xl font-semibold">{eventTexts.create.ticketTypes}</h2>
               <Button
                 type="button"
                 variant="outline"
@@ -154,7 +178,7 @@ export const CreateEventPage = () => {
                 onClick={() => append({ name: '', price: 0, quantity: 100 })}
                 disabled={isSubmitting || createEventMutation.isPending}
               >
-                + Add Ticket Type
+                {eventTexts.create.addTicketType}
               </Button>
             </div>
 
@@ -174,13 +198,13 @@ export const CreateEventPage = () => {
                           htmlFor={`ticketTypes.${index}.name`}
                           className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                          Ticket Name <span className="text-red-500">*</span>
+                          {eventTexts.create.ticketName} <span className="text-red-500">*</span>
                         </label>
                         <input
                           id={`ticketTypes.${index}.name`}
                           type="text"
                           {...register(`ticketTypes.${index}.name`)}
-                          placeholder="General Admission"
+                          placeholder={eventTexts.create.ticketNamePlaceholder}
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                             errors.ticketTypes?.[index]?.name
                               ? 'border-red-500'
@@ -200,7 +224,7 @@ export const CreateEventPage = () => {
                           htmlFor={`ticketTypes.${index}.price`}
                           className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                          Price ($) <span className="text-red-500">*</span>
+                          {eventTexts.create.ticketPrice} <span className="text-red-500">*</span>
                         </label>
                         <input
                           id={`ticketTypes.${index}.price`}
@@ -227,7 +251,7 @@ export const CreateEventPage = () => {
                           htmlFor={`ticketTypes.${index}.quantity`}
                           className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                          Quantity <span className="text-red-500">*</span>
+                          {eventTexts.create.ticketQuantity} <span className="text-red-500">*</span>
                         </label>
                         <input
                           id={`ticketTypes.${index}.quantity`}
@@ -280,7 +304,7 @@ export const CreateEventPage = () => {
               onClick={() => navigate('/organizer')}
               disabled={isSubmitting || createEventMutation.isPending}
             >
-              Cancel
+              {commonTexts.actions.cancel}
             </Button>
             <Button
               type="submit"
@@ -288,7 +312,7 @@ export const CreateEventPage = () => {
               disabled={isSubmitting || createEventMutation.isPending}
               className="flex-1"
             >
-              Create Event
+              {eventTexts.create.submitButton}
             </Button>
           </div>
         </form>

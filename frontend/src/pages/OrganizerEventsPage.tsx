@@ -1,13 +1,20 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventsApi } from '@/api/events';
 import { useAuth } from '@/hooks/useAuth';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { DeleteEventModal } from '@/components/DeleteEventModal';
+import { eventTexts } from '@/i18n/events';
+import { toast } from 'react-hot-toast';
 
 export const OrganizerEventsPage = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
 
   const {
     data: events = [],
@@ -17,6 +24,35 @@ export const OrganizerEventsPage = () => {
     queryKey: ['events'],
     queryFn: eventsApi.getAll,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (eventId: string) => eventsApi.delete(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast.success(eventTexts.organizer.deleteSuccess);
+      setDeleteModalOpen(false);
+      setEventToDelete(null);
+    },
+    onError: () => {
+      toast.error(eventTexts.organizer.deleteError);
+    },
+  });
+
+  const handleDeleteClick = (eventId: string, eventTitle: string) => {
+    setEventToDelete({ id: eventId, title: eventTitle });
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (eventToDelete) {
+      deleteMutation.mutate(eventToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setEventToDelete(null);
+  };
 
   // Filter events created by current organizer
   const organizerEvents = events.filter((event) => event.organizerId === user?.id);
@@ -160,12 +196,30 @@ export const OrganizerEventsPage = () => {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                     <Link to={`/events/${event.id}`}>
                       <Button variant="outline" size="sm" fullWidth>
-                        View Details
+                        {eventTexts.organizer.viewDetails}
                       </Button>
                     </Link>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => toast('Función de edición próximamente', { icon: 'ℹ️' })}
+                      >
+                        {eventTexts.organizer.editEvent}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-red-600 hover:text-red-700 hover:border-red-600"
+                        onClick={() => handleDeleteClick(event.id, event.title)}
+                      >
+                        {eventTexts.organizer.deleteEvent}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -173,6 +227,14 @@ export const OrganizerEventsPage = () => {
           })}
         </div>
       )}
+
+      <DeleteEventModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        eventTitle={eventToDelete?.title || ''}
+        isDeleting={deleteMutation.isPending}
+      />
     </Container>
   );
 };

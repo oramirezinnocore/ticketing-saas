@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { EventImage } from '@/components/EventImage';
 import { eventTexts, commonTexts } from '@/i18n';
 import { formatDate, formatTime, formatCurrency, pluralize } from '@/utils/format';
 import type { OrderTicketLine } from '@/types';
@@ -107,31 +108,46 @@ export const EventDetailPage = () => {
   }
 
   return (
-    <Container className="py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{event.title}</h1>
-
-            <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-6 pb-6 border-b border-gray-200">
+    <>
+      {/* Hero Cover Image */}
+      <div className="relative h-96 overflow-hidden">
+        <EventImage
+          src={event.coverImageUrl}
+          alt={event.coverImageAlt}
+          title={event.title}
+          className="w-full h-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <Container className="relative h-full flex items-end pb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-2xl mb-4">
+              {event.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-white/90">
               <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span className="font-medium">{formatDate(new Date(event.date), 'full')}</span>
               </div>
               <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="font-medium">{formatTime(new Date(event.date))}</span>
               </div>
             </div>
+          </div>
+        </Container>
+      </div>
 
-            <div>
+      <Container className="py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card>
+
               <h2 className="text-xl font-semibold mb-3">{eventTexts.detail.aboutEvent}</h2>
               <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{event.description}</p>
-            </div>
           </Card>
         </div>
 
@@ -227,9 +243,10 @@ export const EventDetailPage = () => {
                 {eventTexts.detail.loginRequired}
               </p>
             )}
-          </Card>
+            </Card>
+          </div>
         </div>
-      </div>
-    </Container>
+      </Container>
+    </>
   );
 };

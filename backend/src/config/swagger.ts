@@ -113,6 +113,17 @@ const options: swaggerJsdoc.Options = {
                 $ref: '#/components/schemas/TicketType',
               },
             },
+            coverImageUrl: {
+              type: 'string',
+              format: 'uri',
+              nullable: true,
+              example: 'http://localhost:5001/uploads/events/1234567890-abc123.jpg',
+            },
+            coverImageAlt: {
+              type: 'string',
+              nullable: true,
+              example: 'Tech Conference 2024 banner',
+            },
             createdAt: {
               type: 'string',
               format: 'date-time',
@@ -353,6 +364,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Users',
         description: 'User management operations',
+      },
+      {
+        name: 'Upload',
+        description: 'File upload operations for event images',
       },
     ],
   },

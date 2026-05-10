@@ -26,6 +26,8 @@ export class EventService {
         quantity: t.quantity,
         quantityAvailable: t.quantityAvailable,
       })),
+      coverImageUrl: doc.coverImageUrl,
+      coverImageAlt: doc.coverImageAlt,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -107,5 +109,23 @@ export class EventService {
   async listEvents(): Promise<IEvent[]> {
     const docs = await Event.find().sort({ date: 1 }).exec();
     return docs.map((d) => this.toPublicEvent(d));
+  }
+
+  async deleteEvent(id: string, userId: string, userRole: string): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError('Invalid event id format');
+    }
+
+    const event = await Event.findById(id);
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    // Authorization: Only event organizer or admin can delete
+    if (userRole !== UserRole.ADMIN && event.organizerId.toString() !== userId) {
+      throw new ForbiddenError('You do not have permission to delete this event');
+    }
+
+    await Event.findByIdAndDelete(id);
   }
 }
