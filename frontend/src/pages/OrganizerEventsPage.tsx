@@ -55,11 +55,8 @@ export const OrganizerEventsPage = () => {
   };
 
   // Filter events created by current organizer
-
   const organizerEvents = events.filter((event) => {
-    const matches = String(event.organizerId) === String(user?.id);
-    console.log(`[Filter] Event: ${event.title}, organizerId: "${event.organizerId}", userId: "${user?.id}", matches: ${matches}`);
-    return matches;
+    return String(event.organizerId) === String(user?.id);
   });
 
   const formatDate = (dateString: string) => {
@@ -133,32 +130,16 @@ export const OrganizerEventsPage = () => {
         </Card>
       )}
 
-      {!isLoading && !error && (
-        <>
-          {/* DEBUG INFO */}
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded">
-            <p className="font-bold">DEBUG INFO:</p>
-            <p>Total events: {events.length}</p>
-            <p>Filtered (owner) events: {organizerEvents.length}</p>
-            <p>User ID: {user?.id}</p>
-            <p>User Role: {user?.role}</p>
-            <p>Is Admin: {user?.role === 'admin' ? 'YES' : 'NO'}</p>
-            <p>Is Organizer: {user?.role === 'organizer' ? 'YES' : 'NO'}</p>
-          </div>
+      {!isLoading && !error && organizerEvents.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {organizerEvents.map((event) => {
+            const totalTickets = calculateTotalTickets(event);
+            const availableTickets = calculateAvailableTickets(event);
+            const soldTickets = totalTickets - availableTickets;
+            const soldPercentage = totalTickets > 0 ? (soldTickets / totalTickets) * 100 : 0;
 
-          {organizerEvents.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {organizerEvents.map((event) => {
-                const totalTickets = calculateTotalTickets(event);
-                const availableTickets = calculateAvailableTickets(event);
-                const soldTickets = totalTickets - availableTickets;
-                const soldPercentage = totalTickets > 0 ? (soldTickets / totalTickets) * 100 : 0;
-
-                // DEBUG: Log each event being rendered
-                console.log(`[Render] Rendering event: ${event.title}, ID: ${event.id}, organizerId: ${event.organizerId}`);
-
-                return (
-                  <Card key={event.id} padding="md">
+            return (
+              <Card key={event.id} padding="md">
                 <div className="flex flex-col h-full">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
@@ -218,14 +199,6 @@ export const OrganizerEventsPage = () => {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                    {/* DEBUG: Show we're in the button section */}
-                    <div className="mb-2 p-2 bg-blue-100 text-xs">
-                      <p>DEBUG: Buttons section for "{event.title}"</p>
-                      <p>organizerId: {event.organizerId}</p>
-                      <p>userId: {user?.id}</p>
-                      <p>Match: {String(event.organizerId) === String(user?.id) ? 'YES' : 'NO'}</p>
-                    </div>
-
                     <Link to={`/events/${event.id}`}>
                       <Button variant="outline" size="sm" fullWidth>
                         {eventTexts.organizer.viewDetails}
@@ -244,10 +217,7 @@ export const OrganizerEventsPage = () => {
                         variant="outline"
                         size="sm"
                         className="flex-1 text-red-600 hover:text-red-700 hover:border-red-600"
-                        onClick={() => {
-                          console.log('[Delete] Button clicked for event:', event.id, event.title);
-                          handleDeleteClick(event.id, event.title);
-                        }}
+                        onClick={() => handleDeleteClick(event.id, event.title)}
                       >
                         {eventTexts.organizer.deleteEvent}
                       </Button>
@@ -255,19 +225,38 @@ export const OrganizerEventsPage = () => {
                   </div>
                 </div>
               </Card>
-                );
-              })}
-            </div>
-          )}
+            );
+          })}
+        </div>
+      )}
 
-          {organizerEvents.length === 0 && (
-            <div className="p-4 bg-red-100 border border-red-300 rounded">
-              <p className="font-bold text-red-700">No events matched the filter!</p>
-              <p>This means event.organizerId !== user.id for all events</p>
-              <p>Check the console for detailed comparison logs</p>
+      {!isLoading && !error && organizerEvents.length === 0 && (
+        <Card>
+          <div className="text-center py-12">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No events</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating your first event.
+            </p>
+            <div className="mt-6">
+              <Link to="/organizer/events/create">
+                <Button>Create Event</Button>
+              </Link>
             </div>
-          )}
-        </>
+          </div>
+        </Card>
       )}
 
       <DeleteEventModal
