@@ -42,7 +42,7 @@ export class EventService {
   }
 
   async createEvent(data: CreateEventDTO): Promise<IEvent> {
-    const { title, description, organizerId, ticketTypes } = data;
+    const { title, description, organizerId, ticketTypes, coverImageUrl, coverImageAlt } = data;
 
     if (!ticketTypes?.length) {
       throw new ValidationError('At least one ticket type is required');
@@ -82,6 +82,9 @@ export class EventService {
           quantity: t.quantity,
           quantityAvailable: t.quantity,
         })),
+        // Include cover image fields if provided
+        ...(coverImageUrl && { coverImageUrl: coverImageUrl.trim() }),
+        ...(coverImageAlt && { coverImageAlt: coverImageAlt.trim() }),
       });
 
       return this.toPublicEvent(event);

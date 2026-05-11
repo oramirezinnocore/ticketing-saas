@@ -69,6 +69,13 @@ const eventSchema = new Schema<IEventDocument>(
       validate: {
         validator: (value: string): boolean => {
           if (!value) return true; // Optional field
+
+          // Accept relative paths (e.g., /uploads/events/abc.jpg)
+          if (value.startsWith('/')) {
+            return true;
+          }
+
+          // Accept absolute HTTP/HTTPS URLs
           try {
             const url = new URL(value);
             return url.protocol === 'http:' || url.protocol === 'https:';
@@ -76,7 +83,7 @@ const eventSchema = new Schema<IEventDocument>(
             return false;
           }
         },
-        message: 'Cover image URL must be a valid HTTP/HTTPS URL',
+        message: 'Cover image URL must be a valid HTTP/HTTPS URL or relative path starting with /',
       },
     },
     coverImageAlt: {

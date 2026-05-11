@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(curl -I http://localhost:5001/uploads/events/1778442038203-89b4d5e3a7a26e06e8cc37b168bce151.png)"
     ]
   }
 }
