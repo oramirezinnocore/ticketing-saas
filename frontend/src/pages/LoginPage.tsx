@@ -10,11 +10,12 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Container } from '@/components/Container';
 import { authTexts } from '@/i18n';
+import { getDashboardRoute } from '@/utils/routing';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setAuth, isAuthenticated } = useAuth();
+  const { setAuth, isAuthenticated, user } = useAuth();
 
   const {
     register,
@@ -27,11 +28,12 @@ export const LoginPage = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/events';
-      navigate(from, { replace: true });
+    if (isAuthenticated && user) {
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+      const defaultRoute = getDashboardRoute(user.role);
+      navigate(from || defaultRoute, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, user, navigate, location]);
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
@@ -67,10 +69,10 @@ export const LoginPage = () => {
       try {
         setAuth(data.user, data.token);
 
-        // Only navigate if auth was successful (check isAuthenticated)
-        // Note: setAuth may have cleared auth if token was invalid
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/events';
-        navigate(from, { replace: true });
+        // Navigate to role-aware dashboard
+        const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+        const defaultRoute = getDashboardRoute(data.user.role);
+        navigate(from || defaultRoute, { replace: true });
       } catch (error) {
         console.error('[Login] Error setting auth:', error);
         setError('root', { message: authTexts.errors.authFailed });
