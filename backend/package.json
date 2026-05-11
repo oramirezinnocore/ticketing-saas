@@ -13,7 +13,11 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "seed:organizer": "ts-node-dev --transpile-only scripts/createOrganizer.ts"
+    "seed:organizer": "ts-node-dev --transpile-only scripts/createOrganizer.ts",
+    "mongo:setup": "bash scripts/setup-mongo-replica.sh",
+    "mongo:start": "bash scripts/start-mongo-replica.sh",
+    "mongo:stop": "bash scripts/stop-mongo-replica.sh",
+    "mongo:status": "docker exec mongo1 mongosh --eval 'rs.status()' --quiet || mongosh --port 27017 --eval 'rs.status()' --quiet"
   },
   "keywords": [
     "ticketing",
@@ -34,6 +38,7 @@
     "mongoose": "^8.0.0",
     "multer": "^2.1.1",
     "pino": "^8.16.0",
+    "qrcode": "^1.5.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
@@ -45,6 +50,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/multer": "^2.1.0",
     "@types/node": "^20.10.0",
+    "@types/qrcode": "^1.5.6",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^6.13.0",

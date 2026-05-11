@@ -1,17 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ticketsApi } from '@/api/tickets';
-import { eventsApi } from '@/api/events';
+import { ticketsApi, type TicketWithQR } from '@/api/tickets';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { TicketStatus, type Ticket, type Event } from '@/types';
 import { format } from 'date-fns';
 import { useState } from 'react';
 
 export const TicketsPage = () => {
   const navigate = useNavigate();
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<TicketWithQR | null>(null);
 
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['my-tickets'],
@@ -20,12 +18,13 @@ export const TicketsPage = () => {
 
   // Group tickets by event
   const ticketsByEvent = tickets?.reduce((acc, ticket) => {
-    if (!acc[ticket.eventId]) {
-      acc[ticket.eventId] = [];
+    const eventId = ticket.eventId._id || ticket.eventId.id || 'unknown';
+    if (!acc[eventId]) {
+      acc[eventId] = [];
     }
-    acc[ticket.eventId].push(ticket);
+    acc[eventId].push(ticket);
     return acc;
-  }, {} as Record<string, Ticket[]>);
+  }, {} as Record<string, TicketWithQR[]>);
 
   if (isLoading) {
     return (
@@ -91,18 +90,16 @@ export const TicketsPage = () => {
 
 interface EventTicketGroupProps {
   eventId: string;
-  tickets: Ticket[];
-  onSelectTicket: (ticket: Ticket) => void;
+  tickets: TicketWithQR[];
+  onSelectTicket: (ticket: TicketWithQR) => void;
 }
 
 const EventTicketGroup = ({ eventId, tickets, onSelectTicket }: EventTicketGroupProps) => {
-  const { data: event } = useQuery({
-    queryKey: ['event', eventId],
-    queryFn: () => eventsApi.getById(eventId),
-  });
+  // Event info is already populated in ticket.eventId
+  const event = tickets[0]?.eventId;
 
-  const validCount = tickets.filter((t) => t.status === TicketStatus.VALID).length;
-  const usedCount = tickets.filter((t) => t.status === TicketStatus.USED).length;
+  const validCount = tickets.filter((t) => t.status === 'valid').length;
+  const usedCount = tickets.filter((t) => t.status === 'used').length;
 
   return (
     <div>
@@ -145,7 +142,7 @@ const EventTicketGroup = ({ eventId, tickets, onSelectTicket }: EventTicketGroup
                 </div>
                 <span
                   className={`px-2 py-1 text-xs font-medium rounded ${
-                    ticket.status === TicketStatus.VALID
+                    ticket.status === 'valid'
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-700'
                   }`}
@@ -154,18 +151,20 @@ const EventTicketGroup = ({ eventId, tickets, onSelectTicket }: EventTicketGroup
                 </span>
               </div>
 
-              {ticket.status === TicketStatus.VALID && (
+              {ticket.status === 'valid' && ticket.qrCode && (
                 <div className="bg-gray-50 border-2 border-primary-500 rounded-lg p-4 text-center">
                   <div className="h-32 flex items-center justify-center bg-white rounded mb-2">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
+                    <img
+                      src={ticket.qrCode}
+                      alt="QR Code"
+                      className="max-h-full max-w-full object-contain"
+                    />
                   </div>
-                  <p className="text-xs text-gray-600">Tap to view QR code</p>
+                  <p className="text-xs text-gray-600">Tap to view full QR code</p>
                 </div>
               )}
 
-              {ticket.status === TicketStatus.USED && (
+              {ticket.status === 'used' && (
                 <div className="bg-gray-100 rounded-lg p-4 text-center">
                   <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -186,15 +185,12 @@ const EventTicketGroup = ({ eventId, tickets, onSelectTicket }: EventTicketGroup
 };
 
 interface TicketDetailModalProps {
-  ticket: Ticket;
+  ticket: TicketWithQR;
   onClose: () => void;
 }
 
 const TicketDetailModal = ({ ticket, onClose }: TicketDetailModalProps) => {
-  const { data: event } = useQuery({
-    queryKey: ['event', ticket.eventId],
-    queryFn: () => eventsApi.getById(ticket.eventId),
-  });
+  const event = ticket.eventId;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -223,7 +219,7 @@ const TicketDetailModal = ({ ticket, onClose }: TicketDetailModalProps) => {
             <span className="text-gray-600">Status</span>
             <span
               className={`px-3 py-1 text-sm font-medium rounded ${
-                ticket.status === TicketStatus.VALID
+                ticket.status === 'valid'
                   ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700'
               }`}
@@ -232,19 +228,17 @@ const TicketDetailModal = ({ ticket, onClose }: TicketDetailModalProps) => {
             </span>
           </div>
 
-          {ticket.status === TicketStatus.VALID && (
+          {ticket.status === 'valid' && ticket.qrCode && (
             <div className="bg-white border-4 border-primary-600 rounded-lg p-6">
               <p className="text-center text-sm text-gray-600 mb-4 font-medium">
                 Scan this QR code at the venue entrance
               </p>
-              <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-                {/* In production, use a QR code library like qrcode.react */}
-                <div className="text-center">
-                  <svg className="w-24 h-24 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                  </svg>
-                  <p className="text-xs text-gray-400">QR Code Placeholder</p>
-                </div>
+              <div className="flex items-center justify-center bg-white rounded-lg p-4">
+                <img
+                  src={ticket.qrCode}
+                  alt="Ticket QR Code"
+                  className="w-full max-w-xs"
+                />
               </div>
             </div>
           )}

@@ -4,6 +4,7 @@ export enum OrderStatus {
   PENDING = 'pending',
   PAID = 'paid',
   CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
 }
 
 export interface IOrderTicketLine {
