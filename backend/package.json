@@ -13,7 +13,11 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "seed:organizer": "ts-node-dev --transpile-only scripts/createOrganizer.ts"
+    "seed:organizer": "ts-node-dev --transpile-only scripts/createOrganizer.ts",
+    "mongo:setup": "bash scripts/setup-mongo-replica.sh",
+    "mongo:start": "bash scripts/start-mongo-replica.sh",
+    "mongo:stop": "bash scripts/stop-mongo-replica.sh",
+    "mongo:status": "docker exec mongo1 mongosh --eval 'rs.status()' --quiet || mongosh --port 27017 --eval 'rs.status()' --quiet"
   },
   "keywords": [
     "ticketing",

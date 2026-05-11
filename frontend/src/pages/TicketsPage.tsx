@@ -1,4 +1,4 @@
-import { useQuery } from '@tantml:react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ticketsApi, type TicketWithQR } from '@/api/tickets';
 import { Container } from '@/components/Container';
