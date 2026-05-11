@@ -60,6 +60,7 @@ export const EventsPage = () => {
           {events.map((event) => {
             const minPrice = Math.min(...event.ticketTypes.map((t) => t.price));
             const totalAvailable = event.ticketTypes.reduce((sum, t) => sum + t.quantityAvailable, 0);
+            console.log('***********', event.coverImageUrl);
 
             return (
               <Link key={event.id} to={`/events/${event.id}`}>

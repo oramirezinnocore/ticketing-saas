@@ -14,8 +14,11 @@ export const helmetMiddleware = helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'http://localhost:5001', 'http://localhost:3000'],
+      connectSrc: ["'self'", 'http://localhost:5001'],
     },
   },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
 
 export const rateLimiter = rateLimit({
