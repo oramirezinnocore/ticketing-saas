@@ -18,8 +18,8 @@ export const EventImage = ({ src, alt, title, className = '' }: EventImageProps)
 
   // CRITICAL FIX: Reset state when src/imageUrl changes
   // This handles React Query async hydration and prop updates
+  // Forces React to treat this as a new image load
   useEffect(() => {
-    // Reset error and loaded states when image URL changes
     setImageError(false);
     setImageLoaded(false);
   }, [imageUrl]);
@@ -30,20 +30,29 @@ export const EventImage = ({ src, alt, title, className = '' }: EventImageProps)
   }
 
   return (
-    <>
-      {/* Show fallback placeholder while image is loading */}
-      {!imageLoaded && <EventImageFallback title={title} className={className} />}
+    <div className={`relative ${className}`}>
+      {/* Fallback - visible while loading, fades out when image loads */}
+      <div
+        className="absolute inset-0 transition-opacity duration-300"
+        style={{ opacity: imageLoaded ? 0 : 1, pointerEvents: imageLoaded ? 'none' : 'auto' }}
+      >
+        <EventImageFallback title={title} className="w-full h-full" />
+      </div>
 
-      {/* Actual image - hidden until loaded to prevent flicker */}
+      {/* Actual image - always rendered, fades in when loaded */}
       <img
+        key={imageUrl} // Force remount when URL changes
         src={imageUrl}
         alt={alt || title}
-        className={`${className} ${imageLoaded ? '' : 'hidden'}`}
-        style={{ objectFit: 'cover' }}
+        className="w-full h-full transition-opacity duration-300"
+        style={{
+          objectFit: 'cover',
+          opacity: imageLoaded ? 1 : 0,
+        }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
         loading="lazy"
       />
-    </>
+    </div>
   );
 };
