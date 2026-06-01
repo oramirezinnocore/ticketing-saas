@@ -56,16 +56,8 @@ export class OrderController {
         throw new BadRequestError('User ID not found in request');
       }
 
-      // TODO: Implement getOrderById in service
-      // For now, return placeholder response
-      sendSuccess(
-        res,
-        {
-          id,
-          message: 'Order retrieval endpoint - to be implemented',
-        },
-        200
-      );
+      const order = await this.orderService.getOrderById(id, userId);
+      sendSuccess(res, order, 200);
     }
   );
 
@@ -80,9 +72,50 @@ export class OrderController {
         throw new BadRequestError('User ID not found in request');
       }
 
-      // TODO: Implement getUserOrders in service
-      // For now, return empty array
-      sendSuccess(res, [], 200);
+      const orders = await this.orderService.getUserOrders(userId);
+      sendSuccess(res, orders, 200);
+    }
+  );
+
+  /**
+   * Create order with payment preference (combined endpoint)
+   */
+  createOrderWithPayment = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      const { eventId, tickets, buyerEmail, description } = req.body as {
+        eventId: string;
+        tickets: { ticketType: string; quantity: number }[];
+        buyerEmail: string;
+        description?: string;
+      };
+
+      if (!eventId) {
+        throw new BadRequestError('Event ID is required');
+      }
+
+      if (!tickets || !Array.isArray(tickets) || tickets.length === 0) {
+        throw new BadRequestError('At least one ticket is required');
+      }
+
+      if (!buyerEmail) {
+        throw new BadRequestError('Buyer email is required');
+      }
+
+      const result = await this.orderService.createOrderWithPayment({
+        userId,
+        eventId,
+        tickets,
+        buyerEmail,
+        description,
+      });
+
+      sendSuccess(res, result, 201);
     }
   );
 }

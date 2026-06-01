@@ -158,4 +158,63 @@ export class OrderService {
       await session.endSession();
     }
   }
+
+  async getOrderById(orderId: string, userId?: string): Promise<IOrder> {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestError('Invalid order id format');
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    if (userId && order.userId.toString() !== userId) {
+      throw new NotFoundError('Order not found');
+    }
+
+    return this.toPublicOrder(order);
+  }
+
+  async getUserOrders(userId: string): Promise<IOrder[]> {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestError('Invalid user id format');
+    }
+
+    const orders = await Order.find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return orders.map((doc) => this.toPublicOrder(doc));
+  }
+
+  async createOrderWithPayment(
+    data: CreateOrderDTO & {
+      buyerEmail: string;
+      description?: string;
+    }
+  ): Promise<{
+    order: IOrder;
+    preferenceId: string;
+    initPoint: string;
+  }> {
+    const order = await this.createOrder(data);
+
+    const { PaymentService } = await import('../payments/payment.service');
+    const paymentService = new PaymentService();
+
+    const paymentResult = await paymentService.createPaymentPreference({
+      orderId: order.id,
+      amount: order.total,
+      description: data.description || `Order #${order.id.slice(0, 8)}`,
+      buyerEmail: data.buyerEmail,
+    });
+
+    return {
+      order,
+      preferenceId: paymentResult.preferenceId,
+      initPoint: paymentResult.initPoint,
+    };
+  }
 }

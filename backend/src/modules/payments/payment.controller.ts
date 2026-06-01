@@ -4,6 +4,7 @@ import { MercadoPagoWebhookPayload } from './payment.interface';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { sendSuccess } from '../../utils/response';
 import { BadRequestError } from '../../utils/AppError';
+import { Order } from '../orders/order.model';
 
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService = new PaymentService()) {}
@@ -20,9 +21,14 @@ export class PaymentController {
         throw new BadRequestError('orderId, description, and buyerEmail are required');
       }
 
+      const order = await Order.findById(orderId);
+      if (!order) {
+        throw new BadRequestError('Order not found');
+      }
+
       const result = await this.paymentService.createPaymentPreference({
         orderId,
-        amount: 0,
+        amount: order.total,
         description,
         buyerEmail,
       });
