@@ -60,19 +60,11 @@ export class PaymentService {
   }
 
   private getMercadoPagoAccessToken(): string {
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
-    if (!token) {
-      throw new Error('MERCADOPAGO_ACCESS_TOKEN is not configured');
-    }
-    return token;
+    return env.MERCADOPAGO_ACCESS_TOKEN;
   }
 
   private getWebhookSecret(): string {
-    const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
-    if (!secret) {
-      throw new Error('MERCADOPAGO_WEBHOOK_SECRET is not configured');
-    }
-    return secret;
+    return env.MERCADOPAGO_WEBHOOK_SECRET;
   }
 
   private async callMercadoPagoAPI<T>(
@@ -96,14 +88,71 @@ export class PaymentService {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(url, options);
+    logger.debug(
+      {
+        url,
+        method,
+        hasBody: !!body,
+      },
+      'Calling MercadoPago API'
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`MercadoPago API error: ${response.status} - ${errorText}`);
+    try {
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorDetail;
+        try {
+          errorDetail = JSON.parse(errorText);
+        } catch {
+          errorDetail = errorText;
+        }
+
+        logger.error(
+          {
+            url,
+            method,
+            status: response.status,
+            statusText: response.statusText,
+            error: errorDetail,
+            requestBody: body,
+          },
+          'MercadoPago API error'
+        );
+
+        throw new Error(
+          `MercadoPago API error (${response.status}): ${
+            typeof errorDetail === 'object'
+              ? JSON.stringify(errorDetail)
+              : errorDetail
+          }`
+        );
+      }
+
+      const result = (await response.json()) as T;
+
+      logger.debug(
+        {
+          url,
+          method,
+          success: true,
+        },
+        'MercadoPago API response received'
+      );
+
+      return result;
+    } catch (error) {
+      logger.error(
+        {
+          url,
+          method,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'MercadoPago API call failed'
+      );
+      throw error;
     }
-
-    return (await response.json()) as T;
   }
 
   async createPaymentPreference(data: CreatePaymentPreferenceDTO): Promise<{
@@ -135,8 +184,8 @@ export class PaymentService {
       throw new ConflictError('Payment already exists for this order');
     }
 
-    const baseUrl = process.env.BACKEND_URL || `http://localhost:${env.PORT}`;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = env.BACKEND_URL;
+    const frontendUrl = env.FRONTEND_URL;
 
     const preference: MercadoPagoPreference = {
       items: [
@@ -155,9 +204,22 @@ export class PaymentService {
         pending: `${frontendUrl}/payment/pending`,
       },
       auto_return: 'approved',
-      notification_url: `${baseUrl}/api/v1/payments/webhook`,
+      notification_url: `${backendUrl}/api/v1/payments/webhook`,
       external_reference: orderId,
     };
+
+    logger.info(
+      {
+        orderId,
+        amount,
+        description,
+        backendUrl,
+        frontendUrl,
+        notificationUrl: preference.notification_url,
+        backUrls: preference.back_urls,
+      },
+      'Creating MercadoPago preference'
+    );
 
     const mpResponse = await this.callMercadoPagoAPI<{
       id: string;

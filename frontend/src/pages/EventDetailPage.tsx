@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { eventsApi } from '@/api/events';
 import { ordersApi } from '@/api/orders';
 import { useAuth } from '@/hooks/useAuth';
+import { useCheckoutStore } from '@/store/checkoutStore';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -15,7 +17,8 @@ import type { OrderTicketLine } from '@/types';
 export const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { setCurrentOrder } = useCheckoutStore();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
 
   const { data: event, isLoading } = useQuery({
@@ -24,10 +27,15 @@ export const EventDetailPage = () => {
     enabled: !!id,
   });
 
-  const createOrderMutation = useMutation({
-    mutationFn: ordersApi.create,
-    onSuccess: (order) => {
-      navigate(`/checkout/${order.id}`);
+  const createOrderWithPaymentMutation = useMutation({
+    mutationFn: ordersApi.createWithPayment,
+    onSuccess: (result) => {
+      setCurrentOrder(result.order);
+      window.location.href = result.initPoint;
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      const message = error?.response?.data?.message || 'Error al procesar la compra. Por favor intenta de nuevo.';
+      toast.error(message);
     },
   });
 
@@ -40,7 +48,12 @@ export const EventDetailPage = () => {
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+
+    if (!user?.email) {
+      toast.error('No se encontró tu correo electrónico. Por favor inicia sesión nuevamente.');
       return;
     }
 
@@ -48,11 +61,16 @@ export const EventDetailPage = () => {
       .filter(([, qty]) => qty > 0)
       .map(([ticketType, quantity]) => ({ ticketType, quantity }));
 
-    if (tickets.length === 0) return;
+    if (tickets.length === 0) {
+      toast.error('Por favor selecciona al menos un boleto');
+      return;
+    }
 
-    createOrderMutation.mutate({
+    createOrderWithPaymentMutation.mutate({
       eventId: id!,
       tickets,
+      buyerEmail: user.email,
+      description: event?.title ? `${event.title} - ${totalTickets} ${pluralize(totalTickets, 'boleto', 'boletos')}` : undefined,
     });
   };
 
@@ -232,10 +250,14 @@ export const EventDetailPage = () => {
               fullWidth
               size="lg"
               onClick={handleCheckout}
-              disabled={totalTickets === 0}
-              isLoading={createOrderMutation.isPending}
+              disabled={totalTickets === 0 || createOrderWithPaymentMutation.isPending}
+              isLoading={createOrderWithPaymentMutation.isPending}
             >
-              {totalTickets === 0 ? eventTexts.detail.selectTicketsContinue : `${eventTexts.detail.buyTickets} ${totalTickets} ${pluralize(totalTickets, 'boleto', 'boletos')} • ${formatCurrency(total)}`}
+              {createOrderWithPaymentMutation.isPending
+                ? 'Procesando compra...'
+                : totalTickets === 0
+                ? eventTexts.detail.selectTicketsContinue
+                : `${eventTexts.detail.buyTickets} ${totalTickets} ${pluralize(totalTickets, 'boleto', 'boletos')} • ${formatCurrency(total)}`}
             </Button>
 
             {!isAuthenticated && totalTickets > 0 && (
