@@ -29,7 +29,7 @@ interface MercadoPagoPreference {
     failure: string;
     pending: string;
   };
-  auto_return: string;
+  auto_return?: 'approved';
   notification_url: string;
   external_reference: string;
 }
@@ -67,6 +67,24 @@ export class PaymentService {
     return env.MERCADOPAGO_WEBHOOK_SECRET;
   }
 
+  /**
+   * MercadoPago only honors back_urls.success for auto_return when the URL is
+   * HTTPS and not localhost/127.0.0.1. Local or plain-HTTP URLs are stripped
+   * server-side, which triggers invalid_auto_return.
+   */
+  private canUseMercadoPagoAutoReturn(baseUrl: string): boolean {
+    try {
+      const parsed = new URL(baseUrl);
+      if (parsed.protocol !== 'https:') {
+        return false;
+      }
+      const host = parsed.hostname.toLowerCase();
+      return host !== 'localhost' && host !== '127.0.0.1' && host !== '0.0.0.0';
+    } catch {
+      return false;
+    }
+  }
+
   private async callMercadoPagoAPI<T>(
     endpoint: string,
     method: 'GET' | 'POST' = 'GET',
@@ -84,8 +102,9 @@ export class PaymentService {
       },
     };
 
-    if (body) {
-      options.body = JSON.stringify(body);
+    const requestBody = body ? JSON.stringify(body) : undefined;
+    if (requestBody) {
+      options.body = requestBody;
     }
 
     logger.debug(
@@ -93,6 +112,11 @@ export class PaymentService {
         url,
         method,
         hasBody: !!body,
+        headers: {
+          Authorization: 'Bearer ***',
+          'Content-Type': 'application/json',
+        },
+        requestBody: body,
       },
       'Calling MercadoPago API'
     );
@@ -184,8 +208,9 @@ export class PaymentService {
       throw new ConflictError('Payment already exists for this order');
     }
 
-    const backendUrl = env.BACKEND_URL;
-    const frontendUrl = env.FRONTEND_URL;
+    const backendUrl = env.BACKEND_URL.replace(/\/$/, '');
+    const frontendUrl = env.FRONTEND_URL.replace(/\/$/, '');
+    const useAutoReturn = this.canUseMercadoPagoAutoReturn(frontendUrl);
 
     const preference: MercadoPagoPreference = {
       items: [
@@ -203,10 +228,22 @@ export class PaymentService {
         failure: `${frontendUrl}/payment/failure`,
         pending: `${frontendUrl}/payment/pending`,
       },
-      auto_return: 'approved',
       notification_url: `${backendUrl}/api/v1/payments/webhook`,
       external_reference: orderId,
     };
+
+    if (useAutoReturn) {
+      preference.auto_return = 'approved';
+    } else {
+      logger.warn(
+        {
+          frontendUrl,
+          hint:
+            'MercadoPago requires HTTPS public URLs for auto_return. Use ngrok (or similar) for FRONTEND_URL in local dev, or omit auto_return.',
+        },
+        'Skipping MercadoPago auto_return'
+      );
+    }
 
     logger.info(
       {
@@ -215,12 +252,12 @@ export class PaymentService {
         description,
         backendUrl,
         frontendUrl,
+        useAutoReturn,
         notificationUrl: preference.notification_url,
         backUrls: preference.back_urls,
       },
       'Creating MercadoPago preference'
     );
-
     const mpResponse = await this.callMercadoPagoAPI<{
       id: string;
       init_point: string;
